@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import { db } from './database/knex'
+import { TUserDB, TTasksDB, TUserTaskDB, TTasksWithUsersDB } from './types'
 
 const app = express()
 
