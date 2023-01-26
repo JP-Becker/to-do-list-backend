@@ -32,6 +32,8 @@ app.get("/ping", async (req: Request, res: Response) => {
 });
 
 
+// USERS ENDPOINTS
+
 // get all users
 app.get('/users', async (req: Request, res: Response) => {
     try {
@@ -204,6 +206,58 @@ app.delete('/users/:id', async (req: Request, res: Response) => {
 
         await db("users").del().where({ id: idToDelete})
         res.status(200).send({ message: "User deletado com sucesso" })
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
+
+
+// TASKS ENDPOINTS
+// get all tasks
+app.get('/tasks', async (req: Request, res: Response) => {
+    try {
+        const result = await db("tasks")
+        res.status(200).send({ 'Lista de tarefas cadastradas': result})
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
+
+
+// get task by id
+app.get('/tasks/:id', async (req: Request, res: Response) => {
+    try {
+        const searchedId = req.params.id
+
+        const [result] = await db("tasks").where({ id: searchedId })
+        
+        if (result) {
+            res.status(200).send({"Resultado da sua busca" : result})
+        } else {
+            res.status(404)
+            throw new Error("A 'id' da tarefa buscada não existe no banco de dados");
+        }
 
     } catch (error) {
         console.log(error)
