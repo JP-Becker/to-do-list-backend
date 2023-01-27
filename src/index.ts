@@ -32,8 +32,8 @@ app.get("/ping", async (req: Request, res: Response) => {
 });
 
 
+// ------------------------------------------------------------------------------------------------
 // USERS ENDPOINTS
-
 // get all users
 app.get('/users', async (req: Request, res: Response) => {
     try {
@@ -223,6 +223,7 @@ app.delete('/users/:id', async (req: Request, res: Response) => {
 })
 
 
+// ------------------------------------------------------------------------------------------------
 // TASKS ENDPOINTS
 // get all tasks
 app.get('/tasks', async (req: Request, res: Response) => {
@@ -455,6 +456,58 @@ app.delete('/tasks/:id', async (req: Request, res: Response) => {
         await db("tasks").del().where({ id: idToDelete})
         
         res.status(200).send({ message: "Task deletada com sucesso" })
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
+
+
+// ------------------------------------------------------------------------------------------------
+// USERS_TASKS ENDPOINTS
+// assign task to user by ID
+app.post("/tasks/:taskId/users/:userId", async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.userId
+        const taskId = req.params.taskId
+
+        if (userId[0] !== "f") {
+            res.status(400)
+            throw new Error("'userId' deve começar com a letra f");
+        }
+        if (taskId[0] !== "t") {
+            res.status(400)
+            throw new Error("'taskId' deve começar com a letra t");
+        }
+
+        const [user]: TUserDB[] | undefined[] = await db("users").where({id: userId})
+        const [task]: TTasksDB[] | undefined[] = await db("tasks").where({id: taskId})
+
+        if (!user) {
+            res.status(400)
+            throw new Error("'userId' não encontrado")
+        }
+        if (!task) {
+            res.status(400)
+            throw new Error("'taskId' não encontrado")
+        }
+
+        const newUserTask: TUserTaskDB = {
+            task_id: taskId,
+            user_id: userId
+        }
+
+        res.status(201).send({message: `Task designada ao usuário de id '${userId}'`})
 
     } catch (error) {
         console.log(error)
