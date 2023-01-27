@@ -523,3 +523,53 @@ app.post("/tasks/:taskId/users/:userId", async (req: Request, res: Response) => 
         }
     }
 })
+
+
+// remove task assigned to user by ID
+app.delete("/tasks/:taskId/users/:userId", async (req: Request, res: Response) => {
+    try {
+        const userIdToDelete = req.params.userIdToDelete
+        const taskIdToDelete = req.params.taskIdToDelete
+
+        if (userIdToDelete[0] !== "f") {
+            res.status(400)
+            throw new Error("'userIdToDelete' deve começar com a letra f");
+        }
+        if (taskIdToDelete[0] !== "t") {
+            res.status(400)
+            throw new Error("'taskIdToDelete' deve começar com a letra t");
+        }
+
+        const [user]: TUserDB[] | undefined[] = await db("users").where({id: userIdToDelete})
+        const [task]: TTasksDB[] | undefined[] = await db("tasks").where({id: taskIdToDelete})
+
+        if (!user) {
+            res.status(400)
+            throw new Error("'id' de usuário não encontrado")
+        }
+        if (!task) {
+            res.status(400)
+            throw new Error("'task' de usuário não encontrado")
+        }
+
+        await db("users_tasks").del()
+            .where({task_id: taskIdToDelete})
+            .andWhere({user_id: userIdToDelete})
+
+        res.status(201).send({message: `Task de id '${taskIdToDelete}' removida do usuário de id '${userIdToDelete}'`})
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
+
