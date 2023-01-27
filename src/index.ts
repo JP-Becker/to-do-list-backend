@@ -273,3 +273,73 @@ app.get('/tasks/:id', async (req: Request, res: Response) => {
         }
     }
 })
+
+
+// create a new task
+app.post('/tasks', async (req: Request, res: Response) => {
+    try {
+        const { id, title, description } = req.body
+
+        if (typeof id !== "string") {
+            res.status(400)
+            throw new Error("Tipo de 'id' inválido");
+        }
+        if (id.length < 4) {
+            res.status(400)
+            throw new Error("'id' deve possuir pelo menos 4 caracteres")
+        }
+        if (id[0] !== "t") {
+            res.status(400)
+            throw new Error("'id' deve começar com a letra 't'")
+        }
+        if (typeof title !== "string") {
+            res.status(400)
+            throw new Error("Tipo de 'title' inválido");
+        }
+        if (title.length < 1) {
+            res.status(400)
+            throw new Error("'title' é obrigatório");
+        }
+        if (typeof description !== "string") {
+            res.status(400)
+            throw new Error("Tipo de 'description' inválido");
+        }
+        if (description.length < 1) {
+            res.status(400)
+            throw new Error("'description' é obrigatório");
+        }
+
+        const [taskIdAlreadyExists] : TTasksDB[] | undefined[] = await db("tasks").where({id})
+
+        if (taskIdAlreadyExists) {
+            res.status(400)
+            throw new Error("Essa 'id' já existe");
+        }
+        
+        const newTask = {
+            id,
+            title,
+            description,
+        }
+        
+        await db("tasks").insert(newTask)
+
+        res.status(201).send({
+            message: "Task criada com sucesso",
+            task: newTask
+        })
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
