@@ -343,3 +343,92 @@ app.post('/tasks', async (req: Request, res: Response) => {
         }
     }
 })
+
+
+// edit task by id
+app.put('/tasks/:id', async (req: Request, res: Response) => {
+    try {
+        const paramsId = req.params.id
+
+        const newId = req.body.id
+        const newTitle = req.body.title
+        const newDescription = req.body.description
+        const newCreated_at = req.body.created_at
+        const newStatus = req.body.status
+        
+        if (newId !== undefined) {
+            if (typeof newId !== "string") {
+                res.status(400)
+                throw new Error("'id' deve ser string")
+            }
+    
+            if (newId.length < 4) {
+                res.status(400)
+                throw new Error("'id' deve possuir pelo menos 4 caracteres")
+            }
+        }
+        if (newTitle !== undefined) {
+            if (typeof newTitle !== "string") {
+                res.status(400)
+                throw new Error("'title' deve ser string")
+            }
+            if (newTitle.length < 2) {
+                res.status(400)
+                throw new Error("'title' deve possuir ao menos 2 caracteres")
+            }
+        }
+        if (newDescription !== undefined) {
+            if (typeof newDescription !== "string") {
+                res.status(400)
+                throw new Error("'description' deve ser string")
+            }
+        }
+        if (newCreated_at !== undefined) {
+            if (typeof newCreated_at !== "string") {
+                res.status(400)
+                throw new Error("'created_at' deve ser string")
+            }
+        }
+        if (newStatus !== undefined) {
+            if (typeof newStatus !== "number") {
+                res.status(400)
+                throw new Error("'status' deve ser number (0 para incompleta ou 1 para completa)")
+            }
+        }
+
+        const [ selectedTask ]: TTasksDB[] | undefined[] = await db("tasks").where({ id: paramsId })
+
+        if (!selectedTask) {
+            res.status(404)
+            throw new Error("Essa 'id' não existe no banco de dados");
+        }
+
+        const editedTask: TTasksDB = {
+            id: newId || selectedTask.id,
+            title: newTitle || selectedTask.title,
+            description: newDescription || selectedTask.description,
+            created_at: newCreated_at || selectedTask.created_at,
+            status: isNaN(newStatus) ? selectedTask.status : newStatus
+        }
+
+        await db("tasks").update(editedTask).where({ id: paramsId })
+
+        res.status(200).send({
+            message: "Task editada com sucesso!",
+            task: editedTask
+        })
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
+    }
+})
